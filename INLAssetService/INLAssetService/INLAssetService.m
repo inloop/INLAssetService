@@ -30,7 +30,7 @@
 		sessionConfiguration.HTTPMaximumConnectionsPerHost = 3;
 		sessionConfiguration.requestCachePolicy = NSURLRequestUseProtocolCachePolicy;
 
-		_imageSession = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:nil delegateQueue:_operationQueue];
+		_session = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:nil delegateQueue:_operationQueue];
 	}
 	return self;
 }
@@ -94,7 +94,7 @@
 								  success:(void (^)(id asset))success
 								  failure:(void (^)(NSError * error))failure
 {
-	NSURLSessionTask * task = [self.imageSession dataTaskWithURL:url
+	NSURLSessionTask * task = [self.session dataTaskWithURL:url
 		completionHandler:^(NSData * data, NSURLResponse * response, NSError * error) {
 			if (error && failure) {
 				failure(error);
@@ -160,6 +160,36 @@
 	};
 
 	return [self downloadImageWithURL:url success:downloadSuccess failure:failure];
+}
+
+-(NSURLSessionTask *)downloadTextFileWithURL:(NSURL *)url
+									 success:(void (^)(NSString * text))success
+									 failure:(void (^)(NSError * error))failure
+{
+	NSString *(^decode)(NSData *) = ^NSString *(NSData * data) {
+		return [NSString stringWithUTF8String:data.bytes];
+	};
+
+	return [self downloadAssetWithURL:url decoder:decode success:success failure:failure];
+}
+
+-(NSURLSessionTask *)downloadAndStoreTextFileWithURL:(NSURL *)url
+											 success:(void (^)(NSString * text))success
+											 failure:(void (^)(NSError * error))failure
+{
+	void (^downloadSuccess)(NSString *) = ^(NSString * text) {
+
+		[self storeAsset:text named:[url lastPathComponent]
+			encoder:^NSData *(NSString * text) {
+				return [text dataUsingEncoding:NSUTF8StringEncoding];
+			}];
+
+		if (success) {
+			success(text);
+		}
+	};
+
+	return [self downloadTextFileWithURL:url success:downloadSuccess failure:failure];
 }
 
 #pragma mark - Local storage
@@ -281,6 +311,20 @@
 
 +(void)storeAsset:(id)asset named:(NSString *)assetName encoder:(NSData *(^)(id))encode {
 	[[self sharedService] storeAsset:asset named:assetName encoder:encode];
+}
+
++(NSURLSessionTask *)downloadTextFileWithURL:(NSURL *)url
+									 success:(void (^)(NSString * text))success
+									 failure:(void (^)(NSError * error))failure
+{
+	return [[self sharedService] downloadTextFileWithURL:url success:success failure:failure];
+}
+
++(NSURLSessionTask *)downloadAndStoreTextFileWithURL:(NSURL *)url
+											 success:(void (^)(NSString * text))success
+											 failure:(void (^)(NSError * error))failure
+{
+	return [[self sharedService] downloadAndStoreTextFileWithURL:url success:success failure:failure];
 }
 
 @end

@@ -11,9 +11,10 @@
 FOUNDATION_EXPORT double INLAssetServiceVersionNumber;
 FOUNDATION_EXPORT const unsigned char INLAssetServiceVersionString[];
 
+
 @interface INLAssetService : NSObject
 
-@property(nonatomic, strong, readonly) NSURLSession * imageSession;
+@property(nonatomic, strong, readonly) NSURLSession * session;
 @property(nonatomic, strong, readonly) NSOperationQueue * operationQueue;
 
 +(instancetype)sharedService;
@@ -65,6 +66,16 @@ FOUNDATION_EXPORT const unsigned char INLAssetServiceVersionString[];
 
 +(UIImage *)imageNamed:(NSString *)imageName;
 +(void)storeImage:(UIImage *)image named:(NSString *)imageName;
+
+#pragma - mark Text
+
++(NSURLSessionTask *)downloadTextFileWithURL:(NSURL *)url
+									 success:(void (^)(NSString * text))success
+									 failure:(void (^)(NSError * error))failure;
+
++(NSURLSessionTask *)downloadAndStoreTextFileWithURL:(NSURL *)url
+											 success:(void (^)(NSString * text))success
+											 failure:(void (^)(NSError * error))failure;
 
 @end
 
